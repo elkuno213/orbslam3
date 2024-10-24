@@ -659,6 +659,10 @@ VertexAccBias::VertexAccBias(const Frame* frame) {
   setEstimate(frame->mImuBias.acc().cast<double>());
 }
 
+VertexGravityDirection::VertexGravityDirection(const Eigen::Matrix3d& R_wg) {
+  setEstimate(GravityDirection(R_wg));
+}
+
 EdgeInertial::EdgeInertial(IMU::Preintegrated *pInt):JRg(pInt->JR_gyro.cast<double>()),
     JVg(pInt->JV_gyro.cast<double>()), JPg(pInt->JP_gyro.cast<double>()), JVa(pInt->JV_acc.cast<double>()),
     JPa(pInt->JP_acc.cast<double>()), mpInt(pInt), dt(pInt->t)
@@ -793,10 +797,10 @@ void EdgeInertialGS::computeError()
     const VertexAccBias* VA= static_cast<const VertexAccBias*>(_vertices[3]);
     const VertexPose* VP2 = static_cast<const VertexPose*>(_vertices[4]);
     const VertexVelocity* VV2 = static_cast<const VertexVelocity*>(_vertices[5]);
-    const VertexGDir* VGDir = static_cast<const VertexGDir*>(_vertices[6]);
+    const VertexGravityDirection* VGDir = static_cast<const VertexGravityDirection*>(_vertices[6]);
     const VertexScale* VS = static_cast<const VertexScale*>(_vertices[7]);
     const IMU::Bias b(VA->estimate()[0],VA->estimate()[1],VA->estimate()[2],VG->estimate()[0],VG->estimate()[1],VG->estimate()[2]);
-    g = VGDir->estimate().Rwg*gI;
+    g = VGDir->estimate().R_wg*gI;
     const double s = VS->estimate();
     const Eigen::Matrix3d dR = mpInt->getDeltaRotation(b).cast<double>();
     const Eigen::Vector3d dV = mpInt->getDeltaVelocity(b).cast<double>();
@@ -817,7 +821,7 @@ void EdgeInertialGS::linearizeOplus()
     const VertexAccBias* VA= static_cast<const VertexAccBias*>(_vertices[3]);
     const VertexPose* VP2 = static_cast<const VertexPose*>(_vertices[4]);
     const VertexVelocity* VV2 = static_cast<const VertexVelocity*>(_vertices[5]);
-    const VertexGDir* VGDir = static_cast<const VertexGDir*>(_vertices[6]);
+    const VertexGravityDirection* VGDir = static_cast<const VertexGravityDirection*>(_vertices[6]);
     const VertexScale* VS = static_cast<const VertexScale*>(_vertices[7]);
     const IMU::Bias b(VA->estimate()[0],VA->estimate()[1],VA->estimate()[2],VG->estimate()[0],VG->estimate()[1],VG->estimate()[2]);
     const IMU::Bias db = mpInt->getDeltaBias(b);
@@ -828,7 +832,7 @@ void EdgeInertialGS::linearizeOplus()
     const Eigen::Matrix3d Rwb1 = VP1->estimate().R_wb;
     const Eigen::Matrix3d Rbw1 = Rwb1.transpose();
     const Eigen::Matrix3d Rwb2 = VP2->estimate().R_wb;
-    const Eigen::Matrix3d Rwg = VGDir->estimate().Rwg;
+    const Eigen::Matrix3d Rwg = VGDir->estimate().R_wg;
     Eigen::MatrixXd Gm = Eigen::MatrixXd::Zero(3,2);
     Gm(0,1) = -IMU::kGravity;
     Gm(1,0) = IMU::kGravity;
