@@ -639,15 +639,15 @@ VertexVelocity::VertexVelocity(const Frame* frame) {
   setEstimate(frame->GetVelocity().cast<double>());
 }
 
-VertexGyroBias::VertexGyroBias(KeyFrame *pKF)
+VertexGyroBias::VertexGyroBias(const KeyFrame *keyframe)
 {
-    setEstimate(pKF->GetGyroBias().cast<double>());
+    setEstimate(keyframe->GetGyroBias().cast<double>());
 }
 
-VertexGyroBias::VertexGyroBias(Frame *pF)
+VertexGyroBias::VertexGyroBias(const Frame *frame)
 {
     Eigen::Vector3d bg;
-    bg << pF->mImuBias.wx, pF->mImuBias.wy,pF->mImuBias.wz;
+    bg << frame->mImuBias.wx, frame->mImuBias.wy,frame->mImuBias.wz;
     setEstimate(bg);
 }
 
